@@ -75,11 +75,11 @@ export async function openScore(c, m) {
 }
 
 /** Match als «läuft» markieren (für den Live-Zeitplan) oder wieder zurücknehmen */
-export async function toggleLive(m) {
+export async function toggleLive(m, station) {
   if (!state.data.canEdit && !(await askPin())) return;
   try {
     if (m.live) await api('DELETE', `/api/live/${m.id}`);
-    else await api('POST', `/api/live/${m.id}`, { station: m.slot?.station ?? null });
+    else await api('POST', `/api/live/${m.id}`, { station: station ?? m.slot?.station ?? null });
     await refresh(true);
   } catch (e) { toast(e.message, { error: true }); }
 }

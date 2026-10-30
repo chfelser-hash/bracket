@@ -1,6 +1,6 @@
 // «Jetzt»: was läuft, was kommt als Nächstes – pro Spiel und Station. Hier werden Resultate eingetragen.
 import { h } from '../ui.js';
-import { state, now } from '../app.js';
+import { state, now, render } from '../app.js';
 import { fmtTime, fmtDur, relTime, isMine, stationName, matchTitle, gameTag, side, section, empty } from './shared.js';
 import { openScore, toggleLive } from './score.js';
 
@@ -35,12 +35,13 @@ export function matchRow(c, m, opts = {}) {
       h('span', null, matchTitle(m)),
       st ? h('span', { class: 'station' }, st) : null,
       h('span', { class: 'when' + (s.status === 'running' ? ' live' : '') }, when)),
+    opts.note ? h('p', { class: 'match-note' + (opts.noteOk ? ' ok' : '') }, opts.note) : null,
     h('div', { class: 'match-players' },
       side(c, m, 'a'),
       m.result ? h('span', { class: 'score-small' }, `${m.result.a} : ${m.result.b}`) : h('span', { class: 'vs' }, 'gegen'),
       side(c, m, 'b')),
     canAct ? h('div', { class: 'match-actions' },
-      !m.result ? h('button', { class: 'btn ghost small', onclick: () => toggleLive(m) }, m.live ? 'Doch nicht gestartet' : 'Start') : null,
+      !m.result ? h('button', { class: 'btn ghost small', onclick: () => toggleLive(m, opts.startStation) }, m.live ? 'Doch nicht gestartet' : opts.early ? 'Jetzt starten' : 'Start') : null,
       h('button', { class: 'btn ' + (m.result ? 'ghost small' : 'primary'), onclick: () => openScore(c, m) }, m.result ? 'Ändern' : 'Resultat')) : null
   );
 }
@@ -90,6 +91,7 @@ export function renderJetzt(main, c) {
       const cur = here.find((m) => m.slot.status === 'running') || here[0];
       if (!cur) return;
       rows.push(matchRow(c, cur, { big: true }));
+      (rows.shown ||= new Set()).add(cur.id);
       const after = here.filter((m) => m !== cur)[0];
       if (after) rows.push(h('p', { class: 'after' }, 'Danach: ', after.a ? c.name(after.a) : after.labelA, ' – ', after.b ? c.name(after.b) : after.labelB, ` · ca. ${fmtTime(after.slot.start)}`));
     });
@@ -97,7 +99,8 @@ export function renderJetzt(main, c) {
     for (const m of open.filter((x) => x.slot.status === 'running' && x.slot.station == null)) rows.push(matchRow(c, m, { big: true }));
     parts.push(h('section', { class: 'block game-block', style: { '--c': c.color(game.id) } },
       h('h2', null, game.name, h('span', { class: 'count' }, `${ms.length - open.length} von ${ms.length} gespielt`)),
-      ...rows));
+      ...rows,
+      moreMatches(c, game, open, rows.shown)));
   }
 
   // Zuletzt gespielt
@@ -105,4 +108,39 @@ export function renderJetzt(main, c) {
   if (recent.length) parts.push(section('Zuletzt gespielt', ...recent.map((m) => matchRow(c, m, { showGame: true }))));
 
   main.replaceChildren(...parts);
+}
+
+// ---------- Weitere Matches (wenn man dem Zeitplan voraus ist) ----------
+const expanded = new Set();
+
+/** Wer spielt gerade irgendwo? */
+function busyPlayers(c) {
+  const busy = new Map();
+  for (const m of c.list) if (m.slot.status === 'running') for (const p of [m.a, m.b]) if (p) busy.set(p, m);
+  return busy;
+}
+
+function moreMatches(c, game, open, shown = new Set()) {
+  const rest = open.filter((m) => !shown.has(m.id) && m.slot.status !== 'running' && m.a && m.b);
+  if (!rest.length) return null;
+  const busy = busyPlayers(c);
+  const stations = game.stations.length ? game.stations : ['Station 1'];
+  const runningOn = new Set(open.filter((m) => m.slot.status === 'running').map((m) => m.slot.station));
+  const freeStation = stations.findIndex((_, i) => !runningOn.has(i));
+  const isOpen = expanded.has(game.id);
+  const toggle = h('button', {
+    class: 'btn ghost small more-btn', 'aria-expanded': String(isOpen),
+    onclick: () => { if (expanded.has(game.id)) expanded.delete(game.id); else expanded.add(game.id); render(); },
+  }, isOpen ? 'Weniger anzeigen' : `Weitere Matches vorziehen (${rest.length})`);
+  if (!isOpen) return h('div', { class: 'more' }, toggle);
+  return h('div', { class: 'more' },
+    toggle,
+    h('p', { class: 'hint' }, 'Wer dem Zeitplan voraus ist, kann hier ein späteres Match vorziehen – «Jetzt starten» oder gleich das Resultat eintragen. Der Zeitplan rechnet danach neu.'),
+    ...rest.map((m) => {
+      const blocking = [m.a, m.b].filter((p) => busy.has(p));
+      const note = blocking.length
+        ? `${blocking.map((p) => c.name(p)).join(' und ')} ${blocking.length > 1 ? 'spielen' : 'spielt'} gerade (${c.game(busy.get(blocking[0]).gameId)?.name})`
+        : freeStation < 0 ? 'Beide frei – alle Stationen besetzt' : 'Beide frei – kann vorgezogen werden';
+      return matchRow(c, m, { early: true, note, noteOk: !blocking.length && freeStation >= 0, startStation: freeStation >= 0 ? freeStation : null });
+    }));
 }

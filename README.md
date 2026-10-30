@@ -3,7 +3,7 @@
 Unser alljährliches Game-Turnier als Web-App – Geschwister von [Kässeli](https://github.com/chfelser-hash/kaesseli) und [Reisli](https://github.com/chfelser-hash/reisli).
 Läuft im Browser auf Handy, PC und TV, die Daten liegen auf der eigenen Synology NAS.
 
-- **Jetzt** – was läuft und was als Nächstes kommt, pro Spiel und Station, mit Uhrzeit. «Start» markiert ein Match als laufend, **Resultat** öffnet die Eingabe: Name antippen = +1, grosse − / + Knöpfe, Zahl lässt sich auch direkt tippen. Oben die Phase («Gruppenphase · fertig ca. 17:20», «Pause», «Finalrunde»), unten die zuletzt gespielten Matches zum Korrigieren.
+- **Jetzt** – was läuft und was als Nächstes kommt, pro Spiel und Station, mit Uhrzeit. «Start» markiert ein Match als laufend, **Resultat** öffnet die Eingabe: Name antippen = +1, grosse − / + Knöpfe, Zahl lässt sich auch direkt tippen. Oben die Phase («Gruppenphase · fertig ca. 17:20», «Pause», «Finalrunde»), unten die zuletzt gespielten Matches zum Korrigieren. **Weitere Matches vorziehen** (pro Spiel) zeigt alle späteren Matches – wer dem Zeitplan voraus ist, startet einfach das nächste; dabei steht, ob beide frei sind oder wer gerade woanders spielt.
 - **Ich bin …** (oben rechts) – auf jedem Handy wählbar: Die eigenen Matches werden hervorgehoben, «Jetzt» zeigt zuoberst «Dein nächstes Match», der Zeitplan hat einen Filter «Mein Plan».
 - **Zeitplan** – alle Matches aller Spiele in zeitlicher Reihenfolge, mit Station, Pause und geschätztem Ende. Filter nach Spiel.
 - **Tabellen** – pro Spiel die Gruppen (Weiterkommende grün), die Gruppenspiele, die Wertungsregel und der Turnierbaum mit Spiel um Platz 3; am Schluss das Podest.

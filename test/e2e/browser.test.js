@@ -65,6 +65,18 @@ test('Resultat eintragen mit den grossen Knöpfen, Tabelle und Zeitplan', { time
   assert.ok((await page.$$('.plan-row')).length >= 6);
 });
 
+test('Dem Zeitplan voraus: weitere Matches anzeigen und vorziehen', { timeout: 60000 }, async () => {
+  await page.click('.tab:has-text("Jetzt")');
+  await page.click('button:has-text("Weitere Matches vorziehen")');
+  await page.waitForSelector('.more .match');
+  assert.equal((await page.$$('.more .match')).length, 4);
+  assert.match(await page.textContent('.more .match-note'), /Beide frei/);
+  await page.click('.more .match >> nth=0 >> button:has-text("Jetzt starten")');
+  await page.waitForFunction(async () => Object.keys((await (await fetch('/api/data')).json()).live).length === 1);
+  await page.click('button:has-text("Weniger anzeigen")');
+  assert.equal((await page.$$('.more .match')).length, 0);
+});
+
 test('Ohne PIN: anschauen ja, eintragen fragt nach der PIN', { timeout: 60000 }, async () => {
   const p2 = await browser.newPage({ viewport: { width: 390, height: 844 } });
   p2.on('pageerror', (e) => errors.push(String(e)));

@@ -3,6 +3,10 @@
 Neueste Version zuoberst. Format: `## Version – Datum`, darunter je eine Zeile pro Änderung.
 Die Version steht auch in `package.json` und unter «Setup → Über Bracket».
 
+## 1.1.0 – 2026-10-30
+- Neu: «Jetzt» → «Weitere Matches vorziehen» pro Spiel – zeigt alle späteren Matches. Wer dem Zeitplan voraus ist, kann sie direkt starten oder das Resultat eintragen; der Zeitplan rechnet danach neu.
+- Bei jedem dieser Matches steht, ob beide frei sind oder wer gerade woanders spielt; «Jetzt starten» nimmt eine freie Station.
+
 ## 1.0.1 – 2026-10-30
 - Bracket läuft neu auf Port 8082 (vorher 8083). Wer schon installiert hat: einmal von Hand `git pull` und `docker compose up -d --build`.
 

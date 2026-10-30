@@ -395,3 +395,10 @@ body[data-route="tv"] main { max-width: none; padding: 0; }
 .tv-side .br-line { font-size: 1.1em; }
 .tv-side .br-time { background: var(--surface); }
 .tv-side .podium .step { width: 11em; }
+
+/* Weitere Matches vorziehen */
+.more { margin: .2rem 0 .4rem; }
+.more-btn { margin-bottom: .4rem; }
+.more .hint { margin: 0 0 .6rem; }
+.match-note { margin: .25rem 0 0; font-size: .82rem; color: var(--ink-3); }
+.match-note.ok { color: var(--pos); font-weight: 600; }
