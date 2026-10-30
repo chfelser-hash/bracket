@@ -70,18 +70,18 @@ jobs:
         run: docker build -t bracket-test .
       - name: Container starten und prüfen
         run: |
-          docker run -d --name bracket -p 8083:8083 bracket-test
+          docker run -d --name bracket -p 8082:8082 bracket-test
           for i in $(seq 1 30); do
-            if curl -fsS http://localhost:8083/api/status; then echo; echo "Bracket läuft"; exit 0; fi
+            if curl -fsS http://localhost:8082/api/status; then echo; echo "Bracket läuft"; exit 0; fi
             sleep 1
           done
           docker logs bracket
           exit 1
       - name: Wie auf der NAS mit eingebundenem Git-Ordner (Aktualisieren über die App)
         run: |
-          docker run -d --name bracket2 -p 8082:8083 -v "$PWD":/app -e RESTART_ON_UPDATE=true bracket-test
+          docker run -d --name bracket2 -p 8084:8082 -v "$PWD":/app -e RESTART_ON_UPDATE=true bracket-test
           for i in $(seq 1 30); do
-            if curl -fsS http://localhost:8082/api/status; then echo; echo "Bracket läuft (Git-Modus)"; exit 0; fi
+            if curl -fsS http://localhost:8084/api/status; then echo; echo "Bracket läuft (Git-Modus)"; exit 0; fi
             sleep 1
           done
           docker logs bracket2

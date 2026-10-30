@@ -7,7 +7,7 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
-if "%PORT%"=="" set PORT=8083
+if "%PORT%"=="" set PORT=8082
 
 REM Firmennetz: Windows-Zertifikate verwenden (Node.js ab 22.15), damit HTTPS-Pruefung des Proxys akzeptiert wird
 set "NODEFLAGS="

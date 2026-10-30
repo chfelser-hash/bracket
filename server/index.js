@@ -12,7 +12,7 @@ import { resolveGame, buildGroups, checkResult, DEFAULT_GAME } from '../public/j
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PUBLIC = path.join(ROOT, 'public');
 const DATA_DIR = path.resolve(process.env.DATA_DIR || path.join(ROOT, 'data'));
-const PORT = Number(process.env.PORT || 8083);
+const PORT = Number(process.env.PORT || 8082);
 const HOST = process.env.HOST || '0.0.0.0';
 const VERSION = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version;
 let CHANGELOG = [];

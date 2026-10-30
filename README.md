@@ -64,14 +64,14 @@ Anschauen kann jeder mit dem Link. Zum Eintragen und Einrichten gibt man auf jed
 
 1. [Node.js](https://nodejs.org) (LTS, ab Version 20) installieren.
 2. Repo herunterladen oder klonen.
-3. `start.bat` doppelklicken – der Browser öffnet <http://localhost:8083>.
+3. `start.bat` doppelklicken – der Browser öffnet <http://localhost:8082>.
 4. Beim ersten Aufruf Turnier-Name und PIN festlegen.
 
 Alternativ im Terminal: `npm start` (Port ändern mit `set PORT=3000`).
 
 ## 2. Betrieb auf der Synology DS218+
 
-Gleich wie Reisli – **Container Manager** (DSM 7.2). Bracket nutzt Port **8083** (Kässeli 8080, Reisli 8081).
+Gleich wie Reisli – **Container Manager** (DSM 7.2). Bracket nutzt Port **8082** (Kässeli 8080, Reisli 8081).
 
 1. Per SSH auf die NAS und das Repo klonen (Git ist installiert):
    ```sh
@@ -82,7 +82,7 @@ Gleich wie Reisli – **Container Manager** (DSM 7.2). Bracket nutzt Port **8083
    - Pfad: `/docker/bracket`
    - Quelle: «Vorhandene docker-compose.yml verwenden»
    - Erstellen – das Image wird auf der NAS gebaut und gestartet.
-3. Im Heimnetz `http://<IP-der-NAS>:8083` öffnen und **sofort** Turnier-Name und PIN festlegen (wer zuerst kommt, legt die PIN fest – darum vor dem Freischalten über Cloudflare).
+3. Im Heimnetz `http://<IP-der-NAS>:8082` öffnen und **sofort** Turnier-Name und PIN festlegen (wer zuerst kommt, legt die PIN fest – darum vor dem Freischalten über Cloudflare).
 
 Die Daten liegen in `/docker/bracket/data` und werden von Hyper Backup mitgesichert, wenn der Ordner `docker` im Backup-Job ist.
 
@@ -92,7 +92,7 @@ Das Turnier findet in einem anderen Heimnetz statt – Bracket läuft trotzdem a
 
 1. <https://one.dash.cloudflare.com> → **Networks → Tunnels** → den Tunnel der NAS → **Public Hostname → Add a public hostname**
    - Subdomain: z.B. `turnier`, Domain: deine Domain
-   - Service: **HTTP**, URL: `<IP-der-NAS>:8083` (oder `bracket:8083`, wenn cloudflared im selben Docker-Netz läuft)
+   - Service: **HTTP**, URL: `<IP-der-NAS>:8082` (oder `bracket:8082`, wenn cloudflared im selben Docker-Netz läuft)
 2. Speichern – Bracket ist unter `https://turnier.<deine-domain>` erreichbar.
 3. Den Link vor dem Turnier verteilen; die PIN nur am Turnier mündlich weitergeben.
 
@@ -127,5 +127,5 @@ Bracket erkennt HTTPS über Cloudflare selbst (Cookie dann nur über HTTPS). Am 
 | Oberfläche | `public/` – HTML/CSS/JavaScript-Module, PWA |
 | Turnier-Logik | `public/js/turnier.js` – Auslosung, Tabellen, KO-Baum, Zeitplan; von Browser, Server und Tests gemeinsam genutzt |
 | Daten | `data/bracket.json`, `data/pin.json`, `data/sessions.json`, `data/backups/` |
-| Konfiguration | `PORT` (8083), `DATA_DIR` (./data), `COOKIE_SECURE`, `RESTART_ON_UPDATE`, `UPDATE_ENABLED` |
+| Konfiguration | `PORT` (8082), `DATA_DIR` (./data), `COOKIE_SECURE`, `RESTART_ON_UPDATE`, `UPDATE_ENABLED` |
 | Tests | `npm test` (schnell: Turnier-Logik), `npm run test:e2e` (API, Update, Browser – braucht Playwright), `npm run test:coverage` (alles mit Testabdeckung) |

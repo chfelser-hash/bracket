@@ -1,7 +1,7 @@
 FROM node:22-alpine
 
 ENV NODE_ENV=production \
-    PORT=8083 \
+    PORT=8082 \
     DATA_DIR=/data
 
 # git: für «Aktualisieren» unter Setup (Programmordner ist dann ein Git-Klon, siehe docker-compose.yml)
@@ -14,8 +14,8 @@ COPY scripts ./scripts
 COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh && mkdir -p /data
 
-EXPOSE 8083
+EXPOSE 8082
 VOLUME ["/data"]
-HEALTHCHECK --interval=60s --timeout=5s CMD wget -qO- http://127.0.0.1:8083/api/status >/dev/null || exit 1
+HEALTHCHECK --interval=60s --timeout=5s CMD wget -qO- http://127.0.0.1:8082/api/status >/dev/null || exit 1
 ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["node", "server/index.js"]

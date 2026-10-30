@@ -5,8 +5,8 @@ services:
     container_name: bracket
     restart: unless-stopped
     ports:
-      # 8083, damit Bracket neben Kässeli (8080) und Reisli (8081) auf derselben NAS laufen kann
-      - "8083:8083"
+      # 8082, damit Bracket neben Kässeli (8080) und Reisli (8081) auf derselben NAS laufen kann
+      - "8082:8082"
     volumes:
       # Daten bleiben ausserhalb des Containers (auf der Synology z.B. /volume1/docker/bracket/data)
       - ./data:/data
@@ -15,7 +15,7 @@ services:
       - ./:/app
     environment:
       - TZ=Europe/Zurich
-      # Über Cloudflare erkennt Bracket HTTPS von selbst. "true" nur, wenn es NIE per http://NAS-IP:8083 genutzt wird
+      # Über Cloudflare erkennt Bracket HTTPS von selbst. "true" nur, wenn es NIE per http://NAS-IP:8082 genutzt wird
       - COOKIE_SECURE=false
       # Nach «Aktualisieren» neu starten (Docker startet den Container automatisch wieder)
       - RESTART_ON_UPDATE=true
