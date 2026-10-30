@@ -1,0 +1,15 @@
+# Turnierdaten – niemals ins Repo!
+data/*
+!data/.gitkeep
+bracket-sicherung*.json
+*.xlsx
+*.xlsm
+*.csv
+
+# Allgemein
+node_modules/
+.DS_Store
+Thumbs.db
+*.log
+.env
+test-results/

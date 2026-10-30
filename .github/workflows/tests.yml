@@ -1,0 +1,112 @@
+# Automatische Tests bei jedem Push und Pull Request – nur mit erfundenen Testdaten.
+name: Tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  tests:
+    name: Turnier-Logik, API und Browser
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Schnelle Tests (Turnier-Logik)
+        run: npm test
+      - name: Playwright installieren (nur für die Tests, nicht Teil der App)
+        run: |
+          npm install --no-save --no-package-lock playwright@1.63.0
+          npx playwright install --with-deps chromium
+      - name: Alle Tests mit Testabdeckung (Mindestwerte – sonst rot)
+        run: |
+          set -o pipefail
+          npm run test:coverage 2>&1 | tee test-output.txt
+      - name: Abdeckung in die Zusammenfassung
+        if: always()
+        run: |
+          {
+            echo '### Testabdeckung'
+            echo
+            echo '```'
+            grep -E '^# (file|.*\|)' test-output.txt | sed 's/^# //'
+            echo '```'
+            grep -E '^# (pass|fail) ' test-output.txt | sed 's/^# /- /'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Bildschirmfotos bei Fehlern
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results/
+          retention-days: 7
+
+  privacy:
+    name: Datenschutz-Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Keine persönlichen Daten im Repo
+        run: npm run privacy
+        env:
+          # Eigene Begriffe (z.B. voller Name), kommagetrennt – nur als GitHub-Secret, nie im Repo
+          PRIVATE_PATTERNS: ${{ secrets.PRIVATE_PATTERNS }}
+
+  docker:
+    name: Docker-Image (wie auf der NAS)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - name: Image bauen
+        run: docker build -t bracket-test .
+      - name: Container starten und prüfen
+        run: |
+          docker run -d --name bracket -p 8083:8083 bracket-test
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:8083/api/status; then echo; echo "Bracket läuft"; exit 0; fi
+            sleep 1
+          done
+          docker logs bracket
+          exit 1
+      - name: Wie auf der NAS mit eingebundenem Git-Ordner (Aktualisieren über die App)
+        run: |
+          docker run -d --name bracket2 -p 8082:8083 -v "$PWD":/app -e RESTART_ON_UPDATE=true bracket-test
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:8082/api/status; then echo; echo "Bracket läuft (Git-Modus)"; exit 0; fi
+            sleep 1
+          done
+          docker logs bracket2
+          exit 1
+
+  # Nur wenn alles grün ist: Version als vX.Y.Z markieren – nur solche bietet «Aktualisieren» in der App an
+  release:
+    name: Version markieren
+    needs: [tests, privacy, docker]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Tag setzen, falls die Version neu ist
+        run: |
+          v="v$(node -p "require('./package.json').version")"
+          if git rev-parse -q --verify "refs/tags/$v" >/dev/null; then
+            echo "$v gibt es schon – nichts zu tun" | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git tag "$v"
+          git push origin "$v"
+          echo "### Neue Version $v freigegeben" >> "$GITHUB_STEP_SUMMARY"

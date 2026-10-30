@@ -1,0 +1,20 @@
+{
+  "name": "bracket",
+  "version": "1.0.0",
+  "description": "Bracket – unser alljährliches Game-Turnier als Web-App (PWA) – auf einer Synology NAS oder lokal betreibbar",
+  "private": true,
+  "type": "module",
+  "main": "server/index.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "test": "node --test test/*.test.js",
+    "privacy": "node scripts/privacy-check.mjs",
+    "test:e2e": "node --test --test-concurrency=1 test/e2e/*.test.js",
+    "test:coverage": "node --test --test-concurrency=1 --experimental-test-coverage --test-coverage-include=server/** --test-coverage-include=public/js/turnier.js --test-coverage-lines=85 --test-coverage-branches=70 --test-coverage-functions=80 test/*.test.js test/e2e/*.test.js"
+  },
+  "license": "MIT"
+}
