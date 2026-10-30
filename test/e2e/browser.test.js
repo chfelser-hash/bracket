@@ -75,6 +75,14 @@ test('Dem Zeitplan voraus: weitere Matches anzeigen und vorziehen', { timeout: 6
   await page.waitForFunction(async () => Object.keys((await (await fetch('/api/data')).json()).live).length === 1);
   await page.click('button:has-text("Weniger anzeigen")');
   assert.equal((await page.$$('.more .match')).length, 0);
+  // Noch ein Match vorziehen (alle Stationen besetzt): beide laufenden bleiben sichtbar, auch eingeklappt
+  await page.click('button:has-text("Weitere Matches vorziehen")');
+  assert.match(await page.textContent('.more .match-note'), /Stationen besetzt|spielt gerade|spielen gerade/);
+  await page.click('.more .match >> nth=0 >> button:has-text("Jetzt starten")');
+  await page.waitForFunction(() => document.querySelectorAll('.game-block > .match.running').length === 2);
+  await page.click('button:has-text("Weniger anzeigen")');
+  assert.equal((await page.$$('.game-block > .match.running')).length, 2);
+  assert.ok(await page.$('.game-block > .after'), 'Danach-Hinweis bleibt');
 });
 
 test('Ohne PIN: anschauen ja, eintragen fragt nach der PIN', { timeout: 60000 }, async () => {

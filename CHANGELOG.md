@@ -3,6 +3,9 @@
 Neueste Version zuoberst. Format: `## Version – Datum`, darunter je eine Zeile pro Änderung.
 Die Version steht auch in `package.json` und unter «Setup → Über Bracket».
 
+## 1.1.1 – 2026-10-30
+- Fehler behoben: Unter «Jetzt» werden immer alle laufenden Matches angezeigt – auch wenn mehrere vorgezogen wurden und «Weitere Matches» eingeklappt ist. Für besetzte Stationen steht darunter, was danach kommt.
+
 ## 1.1.0 – 2026-10-30
 - Neu: «Jetzt» → «Weitere Matches vorziehen» pro Spiel – zeigt alle späteren Matches. Wer dem Zeitplan voraus ist, kann sie direkt starten oder das Resultat eintragen; der Zeitplan rechnet danach neu.
 - Bei jedem dieser Matches steht, ob beide frei sind oder wer gerade woanders spielt; «Jetzt starten» nimmt eine freie Station.

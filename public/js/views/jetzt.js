@@ -85,18 +85,29 @@ export function renderJetzt(main, c) {
       continue;
     }
     const rows = [];
+    rows.shown = new Set();
     const stations = game.stations.length ? game.stations : ['Station 1'];
+    // Alle laufenden Matches immer zeigen (auch mehrere auf einer Station oder ohne Station)
+    const running = open.filter((m) => m.slot.status === 'running').sort((a, b) => (a.slot.station ?? 99) - (b.slot.station ?? 99) || a.slot.start - b.slot.start);
+    for (const m of running) { rows.push(matchRow(c, m, { big: true })); rows.shown.add(m.id); }
+    const afterLine = (after) => h('p', { class: 'after' }, 'Danach: ', after.a ? c.name(after.a) : after.labelA, ' – ', after.b ? c.name(after.b) : after.labelB, ` · ca. ${fmtTime(after.slot.start)}`);
+    // Danach-Hinweis für Stationen, auf denen gerade gespielt wird
     stations.forEach((_, i) => {
-      const here = open.filter((m) => m.slot.station === i);
-      const cur = here.find((m) => m.slot.status === 'running') || here[0];
+      if (!running.some((m) => m.slot.station === i)) return;
+      const next = open.find((m) => m.slot.station === i && m.slot.status !== 'running');
+      if (next) rows.push(afterLine(next));
+    });
+    // Freie Stationen: das nächste Match dort
+    stations.forEach((_, i) => {
+      if (running.some((m) => m.slot.station === i)) return;
+      const here = open.filter((m) => m.slot.station === i && m.slot.status !== 'running');
+      const cur = here[0];
       if (!cur) return;
       rows.push(matchRow(c, cur, { big: true }));
-      (rows.shown ||= new Set()).add(cur.id);
-      const after = here.filter((m) => m !== cur)[0];
-      if (after) rows.push(h('p', { class: 'after' }, 'Danach: ', after.a ? c.name(after.a) : after.labelA, ' – ', after.b ? c.name(after.b) : after.labelB, ` · ca. ${fmtTime(after.slot.start)}`));
+      rows.shown.add(cur.id);
+      const after = here[1];
+      if (after) rows.push(afterLine(after));
     });
-    // Läuft ohne bekannte Station
-    for (const m of open.filter((x) => x.slot.status === 'running' && x.slot.station == null)) rows.push(matchRow(c, m, { big: true }));
     parts.push(h('section', { class: 'block game-block', style: { '--c': c.color(game.id) } },
       h('h2', null, game.name, h('span', { class: 'count' }, `${ms.length - open.length} von ${ms.length} gespielt`)),
       ...rows,
