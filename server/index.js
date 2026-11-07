@@ -180,8 +180,48 @@ async function api(req, res, url) {
     return send(res, 200, { ok: true }, { 'Set-Cookie': sessionCookie(req, '', 0) });
   }
 
+  // ----- Spielbetrieb: neue Resultate und «Start» gehen auch ohne PIN (einstellbar) -----
+  const openPlay = canEdit || (auth.hasPin && store.data.tournament.openResults !== false);
+  const pinNeeded = () => httpError(401, auth.hasPin ? 'Zum Eintragen bitte die Turnier-PIN eingeben' : 'Bitte zuerst einrichten');
+  let m = p.match(/^\/api\/results\/([\w:]+)$/);
+  if (m && method === 'POST') {
+    if (!openPlay) throw pinNeeded();
+    const b = await readBody(req);
+    const a = Number(b.a), bb = Number(b.b);
+    store.mutate((d) => {
+      const { game, r, m: match } = findMatch(d, m[1]);
+      if (!match.a || !match.b) throw httpError(400, 'Die Gegner stehen noch nicht fest');
+      const err = checkResult(game, match, a, bb);
+      if (err) throw httpError(400, err);
+      const old = d.results[match.id];
+      if (!canEdit && old) throw httpError(401, 'Ein Resultat ändern geht nur mit der Turnier-PIN');
+      guardResultChange(d, game, r, match, !!b.force, { a, b: bb });
+      d.results[match.id] = { a, b: bb, at: old?.at || Date.now() };
+      if (old) d.results[match.id].editedAt = Date.now();
+    });
+    return send(res, 200, { rev: store.rev });
+  }
+  // Match läuft (für den Live-Zeitplan)
+  m = p.match(/^\/api\/live\/([\w:]+)$/);
+  if (m && !openPlay) throw pinNeeded();
+  if (m && method === 'POST') {
+    const b = await readBody(req);
+    store.mutate((d) => {
+      const { game, m: match } = findMatch(d, m[1]);
+      if (!match.a || !match.b) throw httpError(400, 'Die Gegner stehen noch nicht fest');
+      if (d.results[match.id]) throw httpError(400, 'Dieses Match hat schon ein Resultat');
+      const st = Number.isInteger(b.station) && b.station >= 0 && b.station < game.stations.length ? b.station : null;
+      d.live[match.id] = { startedAt: Date.now(), station: st };
+    });
+    return send(res, 200, { rev: store.rev });
+  }
+  if (m && method === 'DELETE') {
+    store.mutate((d) => { delete d.live[m[1]]; });
+    return send(res, 200, { rev: store.rev });
+  }
+
   // Ab hier: nur mit PIN
-  if (!canEdit) throw httpError(401, auth.hasPin ? 'Zum Eintragen bitte die Turnier-PIN eingeben' : 'Bitte zuerst einrichten');
+  if (!canEdit) throw pinNeeded();
 
   if (p === '/api/pin' && method === 'POST') {
     const b = await readBody(req);
@@ -215,7 +255,7 @@ async function api(req, res, url) {
     });
     return send(res, 200, { rev: store.rev, added });
   }
-  let m = p.match(/^\/api\/players\/([\w]+)$/);
+  m = p.match(/^\/api\/players\/([\w]+)$/);
   if (m && method === 'PUT') {
     const b = await readBody(req);
     store.mutate((d) => {
@@ -356,21 +396,6 @@ async function api(req, res, url) {
 
   // ----- Resultate -----
   m = p.match(/^\/api\/results\/([\w:]+)$/);
-  if (m && method === 'POST') {
-    const b = await readBody(req);
-    const a = Number(b.a), bb = Number(b.b);
-    store.mutate((d) => {
-      const { game, r, m: match } = findMatch(d, m[1]);
-      if (!match.a || !match.b) throw httpError(400, 'Die Gegner stehen noch nicht fest');
-      const err = checkResult(game, match, a, bb);
-      if (err) throw httpError(400, err);
-      guardResultChange(d, game, r, match, !!b.force, { a, b: bb });
-      const old = d.results[match.id];
-      d.results[match.id] = { a, b: bb, at: old?.at || Date.now() };
-      if (old) d.results[match.id].editedAt = Date.now();
-    });
-    return send(res, 200, { rev: store.rev });
-  }
   if (m && method === 'DELETE') {
     const force = url.searchParams.get('force') === '1';
     store.mutate((d) => {
@@ -380,23 +405,6 @@ async function api(req, res, url) {
       delete d.results[match.id];
       delete d.live[match.id];
     });
-    return send(res, 200, { rev: store.rev });
-  }
-  // Match läuft (für den Live-Zeitplan)
-  m = p.match(/^\/api\/live\/([\w:]+)$/);
-  if (m && method === 'POST') {
-    const b = await readBody(req);
-    store.mutate((d) => {
-      const { game, m: match } = findMatch(d, m[1]);
-      if (!match.a || !match.b) throw httpError(400, 'Die Gegner stehen noch nicht fest');
-      if (d.results[match.id]) throw httpError(400, 'Dieses Match hat schon ein Resultat');
-      const st = Number.isInteger(b.station) && b.station >= 0 && b.station < game.stations.length ? b.station : null;
-      d.live[match.id] = { startedAt: Date.now(), station: st };
-    });
-    return send(res, 200, { rev: store.rev });
-  }
-  if (m && method === 'DELETE') {
-    store.mutate((d) => { delete d.live[m[1]]; });
     return send(res, 200, { rev: store.rev });
   }
 

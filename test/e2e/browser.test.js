@@ -85,19 +85,24 @@ test('Dem Zeitplan voraus: weitere Matches anzeigen und vorziehen', { timeout: 6
   assert.ok(await page.$('.game-block > .after'), 'Danach-Hinweis bleibt');
 });
 
-test('Ohne PIN: anschauen ja, eintragen fragt nach der PIN', { timeout: 60000 }, async () => {
+test('Ohne PIN: neue Resultate ja, ändern fragt nach der PIN', { timeout: 60000 }, async () => {
   const p2 = await browser.newPage({ viewport: { width: 390, height: 844 } });
   p2.on('pageerror', (e) => errors.push(String(e)));
   await p2.goto(srv.base + '/#jetzt');
   await p2.waitForSelector('.match.big');
+  // Neues Resultat geht ohne PIN, mit Hinweis
   await p2.click('.match.big >> button:has-text("Resultat")');
+  await p2.waitForSelector('text=ändern geht danach nur noch mit der Turnier-PIN');
+  await p2.click('dialog[open] button:has-text("Abbrechen")');
+  // Ein bestehendes Resultat ändern fragt nach der PIN
+  await p2.click('.match.done >> button:has-text("Ändern")');
   await p2.waitForSelector('text=Turnier-PIN');
   await p2.fill('input[name=pin]', '0000');
   await p2.click('dialog[open] button:has-text("Entsperren")');
   await p2.waitForSelector('text=PIN falsch');
   await p2.fill('input[name=pin]', '4711');
   await p2.click('dialog[open] button:has-text("Entsperren")');
-  await p2.waitForSelector('text=Resultat eintragen');
+  await p2.waitForSelector('dialog[open] >> text=Resultat ändern');
   await p2.close();
 });
 

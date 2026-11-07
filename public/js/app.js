@@ -172,6 +172,9 @@ export async function lockDevice() {
   toast('Gesperrt – auf diesem Gerät nur noch anschauen');
 }
 
+/** Darf dieses Gerät neue Resultate eintragen und Matches starten? (ohne PIN, wenn im Setup erlaubt) */
+export const canPlay = () => !!state.data && (state.data.canEdit || (!state.data.needsSetup && state.data.tournament.openResults !== false));
+
 export function setMe(id) {
   state.me = id || '';
   store('bracket-me', id || null);
@@ -217,7 +220,7 @@ function renderTopbar(r) {
     h('button', { class: 'me-btn' + (me ? ' set' : ''), onclick: pickMe, title: 'Wer bist du? Deine Matches werden hervorgehoben.' }, me ? me.name : 'Ich bin …'),
     h('button', {
       class: 'icon-btn lock' + (d.canEdit ? ' open' : ''),
-      title: d.canEdit ? 'Entsperrt – antippen zum Sperren' : 'Nur anschauen – antippen zum Entsperren',
+      title: d.canEdit ? 'Entsperrt – antippen zum Sperren' : canPlay() ? 'Gesperrt – Resultate eintragen geht trotzdem. Antippen zum Entsperren' : 'Nur anschauen – antippen zum Entsperren',
       'aria-label': d.canEdit ? 'Gerät sperren' : 'Mit PIN entsperren',
       onclick: () => (d.canEdit ? lockDevice() : askPin()),
     }, d.canEdit ? '🔓' : '🔒')

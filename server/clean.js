@@ -32,6 +32,7 @@ export function cleanTournament(b, cur = DEFAULT_TOURNAMENT) {
   }
   if (b.changeMin !== undefined) out.changeMin = int(b.changeMin, 0, 120, cur.changeMin);
   if (b.breakMin !== undefined) out.breakMin = int(b.breakMin, 0, 600, cur.breakMin);
+  if (b.openResults !== undefined) out.openResults = !!b.openResults;
   return out;
 }
 

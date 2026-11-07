@@ -58,7 +58,9 @@ In der Tabelle steht dann **(D)** bzw. **(L)**. Die Regel steht in der App unter
 
 ### PIN
 
-Anschauen kann jeder mit dem Link. Zum Eintragen und Einrichten gibt man auf jedem Gerät einmal die **Turnier-PIN** ein (gilt 30 Tage, 🔒/🔓 oben rechts). Nach 8 falschen Versuchen ist 15 Minuten Pause. «PIN ändern» meldet alle anderen Geräte ab.
+Anschauen kann jeder mit dem Link. **Neue Resultate eintragen und Matches starten** geht ebenfalls ohne PIN, so können die Spieler ihre Matches selbst eintragen (abschaltbar unter «Setup → Turnier»).
+
+Für alles andere gibt man auf dem Gerät einmal die **Turnier-PIN** ein (gilt 30 Tage, 🔒/🔓 oben rechts): ein bestehendes Resultat ändern oder löschen, Teilnehmer, Spiele, Modus, Auslosung, Sicherung und Update. Nach 8 falschen Versuchen ist 15 Minuten Pause. «PIN ändern» meldet alle anderen Geräte ab.
 
 ## 1. Lokal starten (Windows)
 
@@ -94,7 +96,7 @@ Das Turnier findet in einem anderen Heimnetz statt – Bracket läuft trotzdem a
    - Subdomain: z.B. `turnier`, Domain: deine Domain
    - Service: **HTTP**, URL: `<IP-der-NAS>:8082` (oder `bracket:8082`, wenn cloudflared im selben Docker-Netz läuft)
 2. Speichern – Bracket ist unter `https://turnier.<deine-domain>` erreichbar.
-3. Den Link vor dem Turnier verteilen; die PIN nur am Turnier mündlich weitergeben.
+3. Den Link vor dem Turnier verteilen. Die Spieler können damit selbst Resultate eintragen; die PIN braucht nur, wer korrigiert oder einrichtet.
 
 Bracket erkennt HTTPS über Cloudflare selbst (Cookie dann nur über HTTPS). Am Turnier braucht es nur Internet im fremden WLAN.
 

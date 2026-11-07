@@ -154,6 +154,35 @@ test('Nach der Auslosung: Änderungen am Feld brauchen Bestätigung', async () =
   assert.equal((await data()).draws[games.g2.id].groups.length, 3);
 });
 
+test('Ohne PIN: neue Resultate und «Start» ja, ändern, löschen und Setup nein', async () => {
+  const anon = apiClient(srv.base);
+  let d = await data();
+  assert.equal(d.tournament.openResults, true, 'Standard: offen');
+  const g1 = d.games.find((g) => g.id === games.g1.id);
+  const [m1, m2] = resolveGame(g1, d).matches.filter((m) => m.phase === 'group');
+  assert.equal((await anon('POST', `/api/live/${m1.id}`, { station: 0 })).status, 200);
+  assert.equal((await anon('DELETE', `/api/live/${m1.id}`)).status, 200);
+  assert.equal((await anon('POST', `/api/results/${m1.id}`, { a: 3, b: 1 })).status, 200);
+  assert.deepEqual([(await data()).results[m1.id].a, (await data()).results[m1.id].b], [3, 1]);
+  let r = await anon('POST', `/api/results/${m1.id}`, { a: 1, b: 3 });
+  assert.equal(r.status, 401);
+  assert.match(r.data.error, /ändern geht nur mit der Turnier-PIN/);
+  assert.equal((await anon('DELETE', `/api/results/${m1.id}`)).status, 401);
+  assert.equal((await anon('PUT', '/api/tournament', { openResults: false })).status, 401);
+  assert.equal((await anon('POST', '/api/players', { name: 'Zoe' })).status, 401);
+  // Im Setup ausgeschaltet: alles nur mit PIN
+  assert.equal((await api('PUT', '/api/tournament', { openResults: false })).status, 200);
+  assert.equal((await anon('POST', `/api/results/${m2.id}`, { a: 1, b: 0 })).status, 401);
+  assert.equal((await anon('POST', `/api/live/${m2.id}`, {})).status, 401);
+  assert.equal((await api('POST', `/api/results/${m2.id}`, { a: 1, b: 0 })).status, 200, 'mit PIN geht es');
+  await api('PUT', '/api/tournament', { openResults: true });
+  // Aufräumen für die folgenden Tests
+  await api('DELETE', `/api/results/${m1.id}`);
+  await api('DELETE', `/api/results/${m2.id}`);
+  d = await data();
+  assert.deepEqual(d.results, {});
+});
+
 test('Resultate: Gruppe, KO, Regeln und Abhängigkeiten', async () => {
   let d = await data();
   const g1 = d.games.find((g) => g.id === games.g1.id);

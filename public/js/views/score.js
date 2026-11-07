@@ -1,11 +1,12 @@
 // Resultat eintragen: zwei grosse Hälften – Namen antippen zählt hoch, Zahl lässt sich auch direkt tippen.
 import { h, modal, toast } from '../ui.js';
-import { api, refresh, state, askPin } from '../app.js';
+import { api, refresh, state, askPin, canPlay } from '../app.js';
 import { checkResult, winsNeeded } from '../turnier.js';
 import { matchTitle, stationName } from './shared.js';
 
 export async function openScore(c, m) {
-  if (!state.data.canEdit && !(await askPin())) return;
+  // Neue Resultate: ohne PIN, wenn erlaubt. Bestehende ändern oder löschen: nur mit PIN.
+  if (!state.data.canEdit && (!canPlay() || m.result) && !(await askPin())) return;
   const game = c.game(m.gameId);
   const r = m.result;
   const val = { a: r?.a ?? 0, b: r?.b ?? 0 };
@@ -46,6 +47,7 @@ export async function openScore(c, m) {
     h('p', { class: 'score-where', style: { '--c': c.color(m.gameId) } }, where),
     need ? h('p', { class: 'hint' }, `Best of ${game.bestOf}: Runden zählen – wer zuerst ${need} hat, ist weiter.`)
       : m.phase === 'ko' ? h('p', { class: 'hint' }, 'KO: Es braucht einen Sieger, kein Unentschieden.') : null,
+    !state.data.canEdit ? h('p', { class: 'hint' }, 'Bitte genau prüfen – ändern geht danach nur noch mit der Turnier-PIN.') : null,
     h('div', { class: 'score-board' }, A, h('span', { class: 'score-colon', 'aria-hidden': 'true' }, ':'), B),
     verdict, err);
 
@@ -76,7 +78,7 @@ export async function openScore(c, m) {
 
 /** Match als «läuft» markieren (für den Live-Zeitplan) oder wieder zurücknehmen */
 export async function toggleLive(m, station) {
-  if (!state.data.canEdit && !(await askPin())) return;
+  if (!canPlay() && !(await askPin())) return;
   try {
     if (m.live) await api('DELETE', `/api/live/${m.id}`);
     else await api('POST', `/api/live/${m.id}`, { station: station ?? m.slot?.station ?? null });

@@ -80,6 +80,10 @@ function tournamentBlock(d, c) {
       field('Startzeit', h('input', { type: 'time', value: t.start, onchange: save('start') })),
       field('Wechselzeit', h('span', { class: 'unit' }, h('input', { type: 'number', min: 0, max: 120, value: t.changeMin, onchange: save('changeMin') }), 'min'), 'Zwischen zwei Matches, für Spieler und Station'),
       field('Pause vor der Finalrunde', h('span', { class: 'unit' }, h('input', { type: 'number', min: 0, max: 600, value: t.breakMin, onchange: save('breakMin') }), 'min'))),
+    h('label', { class: 'check' },
+      h('input', { type: 'checkbox', checked: t.openResults !== false, onchange: (e) => act('PUT', '/api/tournament', { openResults: e.target.checked }, { done: e.target.checked ? 'Resultate gehen jetzt ohne PIN' : 'Resultate nur noch mit PIN' }) }),
+      'Spieler dürfen Resultate ohne PIN eintragen und Matches starten'),
+    h('p', { class: 'hint' }, 'Ändern oder Löschen eines Resultats und das ganze Setup brauchen immer die PIN.'),
     c.list.length ? h('p', { class: 'hint' }, `Mit dem aktuellen Plan: Start ${fmtTime(c.base)}${t.date ? ' am ' + fmtDate(t.date) : ''}, Ende ca. ${fmtTime(c.sc.end)}.`) : null);
 }
 
@@ -269,7 +273,9 @@ const renderAgain = () => render();
 // ---------- PIN ----------
 function pinBlock() {
   return block('mehr', 'PIN & Geräte',
-    h('p', null, 'Wer den Link hat, kann alles anschauen. Eintragen geht nur auf Geräten, auf denen die PIN eingegeben wurde.'),
+    h('p', null, state.data.tournament.openResults !== false
+      ? 'Wer den Link hat, kann alles anschauen und neue Resultate eintragen. Resultate ändern und das Setup gehen nur auf Geräten, auf denen die PIN eingegeben wurde.'
+      : 'Wer den Link hat, kann alles anschauen. Eintragen geht nur auf Geräten, auf denen die PIN eingegeben wurde.'),
     h('div', { class: 'row gap wrap' },
       h('button', { class: 'btn', onclick: changePin }, 'PIN ändern'),
       h('button', { class: 'btn ghost', onclick: lockDevice }, 'Dieses Gerät sperren'),

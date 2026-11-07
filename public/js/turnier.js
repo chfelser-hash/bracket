@@ -16,7 +16,7 @@ export const TIEBREAK_RULES = [
 ];
 
 export const DEFAULT_GAME = { roundMin: 10, stations: ['Station 1'], groupSize: 4, advance: 2, koSize: 0, bestOf: 1, thirdPlace: true };
-export const DEFAULT_TOURNAMENT = { name: 'Game-Turnier', date: '', start: '13:00', changeMin: 5, breakMin: 30 };
+export const DEFAULT_TOURNAMENT = { name: 'Game-Turnier', date: '', start: '13:00', changeMin: 5, breakMin: 30, openResults: true };
 
 // ---------- Zufall (reproduzierbar, damit Tests stabil sind) ----------
 export function rng(seed) {
