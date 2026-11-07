@@ -49,13 +49,19 @@ function qualifiedIds(r) {
   return new Set(r.matches.filter((m) => m.phase === 'ko').flatMap((m) => m.src.map((s, i) => (s.seed ? [m.a, m.b][i] : null))).filter(Boolean));
 }
 
+const TIE = {
+  direkt: ['D', 'Punktgleich – die Direktbegegnung entscheidet'],
+  tore: ['T', 'Punktgleich, Direktbegegnung ausgeglichen – Tordifferenz bzw. Tore entscheiden'],
+  los: ['L', 'Alles gleich – das Los (Reihenfolge der Auslosung) entscheidet'],
+};
+
 function groupTable(c, t, qualified, opts) {
   const head = h('tr', null, h('th', { class: 'rank' }, ''), h('th', { class: 'name' }, `Gruppe ${t.name}`), h('th', { title: 'Spiele' }, 'Sp'),
     opts.tv ? null : h('th', { title: 'Siege' }, 'S'), opts.tv ? null : h('th', { title: 'Unentschieden' }, 'U'), opts.tv ? null : h('th', { title: 'Niederlagen' }, 'N'),
     h('th', { title: 'Tore' }, 'Tore'), h('th', { title: 'Tordifferenz' }, '±'), h('th', { class: 'pts', title: 'Punkte' }, 'Pkt'));
   const rows = t.rows.map((row) => h('tr', { class: (qualified.has(row.id) ? 'q ' : '') + (row.id === state.me ? 'me' : '') },
     h('td', { class: 'rank' }, row.rank),
-    h('td', { class: 'name' }, c.name(row.id), row.tie && row.played ? h('span', { class: 'tie', title: row.tie === 'direkt' ? 'Gleichstand – Direktbegegnung entscheidet' : 'Gleichstand – Los (Reihenfolge der Auslosung) entscheidet' }, row.tie === 'direkt' ? ' (D)' : ' (L)') : null),
+    h('td', { class: 'name' }, c.name(row.id), row.tie && row.played ? h('span', { class: 'tie', title: TIE[row.tie][1] }, ` (${TIE[row.tie][0]})`) : null),
     h('td', null, row.played),
     opts.tv ? null : h('td', null, row.w), opts.tv ? null : h('td', null, row.d), opts.tv ? null : h('td', null, row.l),
     h('td', null, `${row.gf}:${row.ga}`),
@@ -75,7 +81,7 @@ function rules(g, r) {
   return h('details', { class: 'rules' }, h('summary', null, 'So wird gewertet'),
     h('p', null, `Sieg ${POINTS.win} Punkte, Unentschieden ${POINTS.draw}, Niederlage ${POINTS.loss}. Bei Gleichstand zählt der Reihe nach:`),
     h('ol', null, TIEBREAK_RULES.map((x) => h('li', null, x))),
-    h('p', { class: 'small muted' }, '(D) = Direktbegegnung hat entschieden, (L) = Los. ', adv,
+    h('p', { class: 'small muted' }, 'Bei Punktgleichheit steht, was entschieden hat: (D) Direktbegegnung, (T) Tordifferenz oder Tore, (L) Los. ', adv,
       g.koSize ? ' Fehlen Plätze, kommen die besten Gruppen-Nächsten weiter (verglichen pro Match).' : ''));
 }
 

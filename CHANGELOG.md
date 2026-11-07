@@ -3,6 +3,10 @@
 Neueste Version zuoberst. Format: `## Version – Datum`, darunter je eine Zeile pro Änderung.
 Die Version steht auch in `package.json` und unter «Setup → Über Bracket».
 
+## 1.3.0 – 2026-11-07
+- Gruppenwertung: Bei Punktgleichheit zählt jetzt zuerst die Direktbegegnung, erst danach Tordifferenz und Tore aus allen Spielen (wie an der EM). Bei drei oder mehr Punktgleichen wird die Direktbegegnung für die übrigen wiederholt.
+- In der Tabelle steht neu (D) Direktbegegnung, (T) Tordifferenz/Tore oder (L) Los.
+
 ## 1.2.0 – 2026-11-07
 - Spieler können neue Resultate ohne PIN eintragen und Matches starten. Ein bestehendes Resultat ändern oder löschen und das ganze Setup brauchen weiterhin die PIN.
 - Neue Einstellung unter «Setup → Turnier»: «Spieler dürfen Resultate ohne PIN eintragen» (Standard: ein).

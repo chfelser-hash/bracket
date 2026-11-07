@@ -55,7 +55,7 @@ test('Tabelle: Punkte, Tordifferenz, Tore', () => {
   assert.equal(t[0].w, 1); assert.equal(t[0].d, 1);
 });
 
-test('Tabelle: Direktbegegnung entscheidet bei Gleichstand nach Punkten, Differenz und Toren', () => {
+test('Tabelle: Direktbegegnung unter drei Punktgleichen, ein Rest bleibt gleich', () => {
   // A und B: je 3 Punkte, Diff 0, Tore 2 – B hat A geschlagen
   const ms = [{ id: 'm1', a: 'A', b: 'B' }, { id: 'm2', a: 'A', b: 'C' }, { id: 'm3', a: 'B', b: 'C' }];
   const res = { m1: { a: 1, b: 2 }, m2: { a: 1, b: 0 }, m3: { a: 0, b: 1 } };
@@ -63,6 +63,45 @@ test('Tabelle: Direktbegegnung entscheidet bei Gleichstand nach Punkten, Differe
   // alle 3 Punkte, Diff 0; Tore A2 B2 C1 → C letzter, A/B direkt: B
   assert.deepEqual(t.map((r) => r.id), ['B', 'A', 'C']);
   assert.equal(t[0].tie, 'direkt');
+});
+
+test('Tabelle: Direktbegegnung zählt vor der Tordifferenz', () => {
+  // A und B je 6 Punkte; A hat die viel bessere Tordifferenz, aber B hat A geschlagen → B vor A
+  const ms = [
+    { id: 'ab', a: 'A', b: 'B' }, { id: 'ac', a: 'A', b: 'C' }, { id: 'ad', a: 'A', b: 'D' },
+    { id: 'bc', a: 'B', b: 'C' }, { id: 'bd', a: 'B', b: 'D' }, { id: 'cd', a: 'C', b: 'D' },
+  ];
+  const res = { ab: { a: 0, b: 1 }, ac: { a: 3, b: 0 }, ad: { a: 5, b: 0 }, bc: { a: 0, b: 1 }, bd: { a: 1, b: 0 }, cd: { a: 0, b: 1 } };
+  const t = standings(['A', 'B', 'C', 'D'], ms, res);
+  assert.equal(t[0].pts, 6); assert.equal(t[1].pts, 6);
+  assert.ok(t.find((r) => r.id === 'A').gd > t.find((r) => r.id === 'B').gd);
+  assert.deepEqual(t.slice(0, 2).map((r) => r.id), ['B', 'A']);
+  assert.equal(t[0].tie, 'direkt');
+  // C und D je 3 Punkte, D hat C geschlagen → D vor C (obwohl C die bessere Tordifferenz hat)
+  assert.deepEqual(t.slice(2).map((r) => r.id), ['D', 'C']);
+});
+
+test('Tabelle: Direktbegegnung bei drei Punktgleichen wird für die übrigen wiederholt', () => {
+  // A, B, C je 6 Punkte (alle schlagen D). Untereinander: A–B 2:1, B–C 1:0, C–A 2:1.
+  // Mini-Tabelle: alle 3 Punkte, Diff 0; Tore A 3, B 2, C 2 → A vorne. B/C nochmals direkt: B hat C geschlagen.
+  const ms = [
+    { id: 'ab', a: 'A', b: 'B' }, { id: 'bc', a: 'B', b: 'C' }, { id: 'ca', a: 'C', b: 'A' },
+    { id: 'ad', a: 'A', b: 'D' }, { id: 'bd', a: 'B', b: 'D' }, { id: 'cd', a: 'C', b: 'D' },
+  ];
+  const res = { ab: { a: 2, b: 1 }, bc: { a: 1, b: 0 }, ca: { a: 2, b: 1 }, ad: { a: 1, b: 0 }, bd: { a: 1, b: 0 }, cd: { a: 9, b: 0 } };
+  const t = standings(['A', 'B', 'C', 'D'], ms, res);
+  assert.deepEqual(t.map((r) => r.id), ['A', 'B', 'C', 'D']);
+  assert.ok(t[2].gd > t[0].gd, 'C hätte die beste Tordifferenz');
+  assert.equal(t[1].tie, 'direkt');
+});
+
+test('Tabelle: Direktbegegnung unentschieden → Tordifferenz, dann Tore', () => {
+  const ms = [{ id: 'ab', a: 'A', b: 'B' }, { id: 'ac', a: 'A', b: 'C' }, { id: 'bc', a: 'B', b: 'C' }];
+  const res = { ab: { a: 1, b: 1 }, ac: { a: 1, b: 0 }, bc: { a: 4, b: 0 } };
+  const t = standings(['A', 'B', 'C'], ms, res);
+  assert.deepEqual(t.map((r) => r.id), ['B', 'A', 'C']);
+  assert.equal(t[0].tie, 'tore');
+  assert.equal(t[2].tie, undefined);
 });
 
 test('Tabelle: ohne Resultate entscheidet das Los (Reihenfolge der Auslosung)', () => {

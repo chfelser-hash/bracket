@@ -34,9 +34,13 @@ Die Vorschau im Spiel-Dialog zeigt sofort, was herauskommt: Anzahl Gruppen, Grup
 
 ### Wertung in der Gruppe
 
-Sieg 3 Punkte, Unentschieden 1, Niederlage 0. Bei Gleichstand der Reihe nach (wie an einer Fussball-WM):
-Punkte → Tordifferenz → mehr erzielte Tore → Direktbegegnung (nur unter den Punktgleichen) → Los (Reihenfolge der Auslosung).
-In der Tabelle steht dann **(D)** bzw. **(L)**. Die Regel steht in der App unter «Tabellen → So wird gewertet».
+Sieg 3 Punkte, Unentschieden 1, Niederlage 0. Bei Punktgleichheit der Reihe nach (wie an der EM):
+1. **Direktbegegnung** – Mini-Tabelle nur aus den Spielen der Punktgleichen untereinander (Punkte, Tordifferenz, Tore). Trennt sie bei drei oder mehr nur einen Teil, wird sie für die übrigen wiederholt.
+2. Tordifferenz aus allen Gruppenspielen
+3. Mehr erzielte Tore aus allen Gruppenspielen
+4. Los (Reihenfolge der Auslosung)
+
+In der Tabelle steht dann, was entschieden hat: **(D)** Direktbegegnung, **(T)** Tordifferenz/Tore, **(L)** Los. Die Regel steht in der App unter «Tabellen → So wird gewertet».
 
 ### Finalrunde
 

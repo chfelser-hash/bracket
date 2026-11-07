@@ -9,9 +9,9 @@ export const POINTS = { win: 3, draw: 1, loss: 0 };
 /** Regel bei Punktgleichheit – wird in der App so angezeigt */
 export const TIEBREAK_RULES = [
   'Punkte (Sieg 3, Unentschieden 1, Niederlage 0)',
-  'Tordifferenz',
-  'Mehr erzielte Tore',
-  'Direktbegegnung (Punkte, Tordifferenz, Tore nur unter den Punktgleichen)',
+  'Direktbegegnung: Punkte, Tordifferenz, Tore nur aus den Spielen der Punktgleichen untereinander (bei mehr als zwei wird das für die übrigen Punktgleichen wiederholt)',
+  'Tordifferenz aus allen Gruppenspielen',
+  'Mehr erzielte Tore aus allen Gruppenspielen',
   'Los (Reihenfolge der Auslosung)',
 ];
 
@@ -97,28 +97,46 @@ function tally(ids, matches, results) {
 
 const cmpMain = (x, y) => y.pts - x.pts || y.gd - x.gd || y.gf - x.gf;
 
+/** In gleich bewertete Blöcke aufteilen (Liste muss nach cmp sortiert sein) */
+function blocks(list, cmp) {
+  const out = [];
+  for (let i = 0; i < list.length;) {
+    let j = i + 1;
+    while (j < list.length && cmp(list[i], list[j]) === 0) j++;
+    out.push(list.slice(i, j));
+    i = j;
+  }
+  return out;
+}
+
+/**
+ * Punktgleiche ordnen (wie an der EM): zuerst die Direktbegegnung (Mini-Tabelle nur aus den Spielen
+ * untereinander); trennt sie nur einen Teil, wird sie für die übrigen Punktgleichen wiederholt.
+ * Danach Tordifferenz und Tore aus allen Spielen, zuletzt das Los.
+ */
+function breakTie(tied, matches, results) {
+  const sub = tally(tied.map((t) => t.id), matches, results);
+  const cmpH2h = (x, y) => cmpMain(sub.get(x.id), sub.get(y.id));
+  const sorted = [...tied].sort(cmpH2h);
+  const parts = blocks(sorted, cmpH2h);
+  if (parts.length > 1) {
+    return parts.flatMap((part) => {
+      if (part.length === 1) { part[0].tie = 'direkt'; return part; }
+      return breakTie(part, matches, results);
+    });
+  }
+  // Direktbegegnung trennt nicht: Tordifferenz, Tore (alle Spiele), dann Los
+  const cmpAll = (x, y) => y.gd - x.gd || y.gf - x.gf;
+  sorted.sort((x, y) => cmpAll(x, y) || x.order - y.order);
+  for (const part of blocks(sorted, cmpAll)) for (const t of part) t.tie = part.length > 1 ? 'los' : 'tore';
+  return sorted;
+}
+
 /** Tabelle einer Gruppe, sortiert nach TIEBREAK_RULES. ids = Reihenfolge der Auslosung (= Los). */
 export function standings(ids, matches, results) {
   const rows = [...tally(ids, matches, results).values()];
-  rows.sort(cmpMain);
-  // Gleichstand nach Punkten/Tordifferenz/Toren → Direktbegegnung unter genau diesen Teams, dann Los
-  const out = [];
-  for (let i = 0; i < rows.length;) {
-    let j = i + 1;
-    while (j < rows.length && cmpMain(rows[i], rows[j]) === 0) j++;
-    const tied = rows.slice(i, j);
-    if (tied.length > 1) {
-      const sub = tally(tied.map((t) => t.id), matches, results);
-      tied.sort((x, y) => {
-        const a = sub.get(x.id), b = sub.get(y.id);
-        return cmpMain(a, b) || x.order - y.order;
-      });
-      const h2hDecides = tied.some((t, k) => k > 0 && cmpMain(sub.get(tied[k - 1].id), sub.get(t.id)) !== 0);
-      for (const t of tied) t.tie = h2hDecides ? 'direkt' : 'los';
-    }
-    out.push(...tied);
-    i = j;
-  }
+  rows.sort((x, y) => y.pts - x.pts);
+  const out = blocks(rows, (x, y) => y.pts - x.pts).flatMap((tied) => (tied.length > 1 ? breakTie(tied, matches, results) : tied));
   out.forEach((r, i) => { r.rank = i + 1; });
   return out;
 }
