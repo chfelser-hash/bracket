@@ -119,6 +119,20 @@ function dependents(matches, id) {
   return out;
 }
 
+/** Ändert sich ein Gruppenresultat, ist ein schon gespieltes Stechen der Gruppe hinfällig (bzw. spätere Stechen-Runden) */
+function guardStechen(d, game, match, force) {
+  if (match.phase !== 'group') return;
+  const pre = `${game.id}:G${match.group}:S`;
+  const later = (k) => k.startsWith(pre) && k !== match.id && (!match.stechen || Number(k.slice(pre.length).split(':')[0]) > match.stechenRound);
+  if (Object.keys(d.results).some(later) && !force) {
+    throw conflict(match.stechen
+      ? 'Danach wurde schon weiter gestochen. Diese Stechen-Resultate werden gelöscht.'
+      : 'Das Stechen dieser Gruppe wurde schon gespielt. Mit dem neuen Resultat wird es gelöscht – vielleicht braucht es gar keines mehr.');
+  }
+  for (const k of Object.keys(d.results)) if (later(k)) delete d.results[k];
+  for (const k of Object.keys(d.live)) if (later(k)) delete d.live[k];
+}
+
 function findMatch(d, mid) {
   const gid = mid.split(':')[0];
   const game = findGame(d, gid);
@@ -196,6 +210,7 @@ async function api(req, res, url) {
       const old = d.results[match.id];
       if (!canEdit && old) throw httpError(401, 'Ein Resultat ändern geht nur mit der Turnier-PIN');
       guardResultChange(d, game, r, match, !!b.force, { a, b: bb });
+      if (old && (old.a !== a || old.b !== bb)) guardStechen(d, game, match, !!b.force);
       d.results[match.id] = { a, b: bb, at: old?.at || Date.now() };
       if (old) d.results[match.id].editedAt = Date.now();
     });
@@ -402,6 +417,7 @@ async function api(req, res, url) {
       const { game, r, m: match } = findMatch(d, m[1]);
       if (!d.results[match.id]) return;
       guardResultChange(d, game, r, match, force, null);
+      guardStechen(d, game, match, force);
       delete d.results[match.id];
       delete d.live[match.id];
     });

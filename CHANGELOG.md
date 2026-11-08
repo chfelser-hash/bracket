@@ -3,6 +3,11 @@
 Neueste Version zuoberst. Format: `## Version – Datum`, darunter je eine Zeile pro Änderung.
 Die Version steht auch in `package.json` und unter «Setup → Über Bracket».
 
+## 1.5.0 – 2026-11-08
+- Stechen statt Los: Ist in einer Gruppe nach allen Kriterien alles gleich und geht es um einen Platz, der zählt, spielen die Betroffenen ein Entscheidungsmatch (kein Unentschieden). Es erscheint automatisch unter «Jetzt», im Zeitplan und bei der Gruppe; die Finalrunde wartet darauf.
+- Wird danach ein Gruppenresultat geändert, fragt Bracket nach und löscht das hinfällige Stechen.
+- Fehler behoben: Unter «Tabellen» stand bei nur einem Spiel «null».
+
 ## 1.4.0 – 2026-11-08
 - Neu: «Erinnerung als PDF» (unter Tabellen und Setup) – Titelseite mit allen Siegern, Zahlen und der Übersicht «Wer ist wie weit gekommen», danach pro Spiel eine Seite mit Podest, Tabellen, Turnierbaum und allen Resultaten. Speichern über das Druckfenster des Browsers.
 

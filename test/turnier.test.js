@@ -216,11 +216,73 @@ test('Nur Gruppenphase (1 Gruppe, 1 weiter): Rangliste aus der Tabelle', () => {
   const g = game({ advance: 1 });
   const state = { games: [g], draws: { g1: { groups: [['x', 'y', 'z']] } }, results: {} };
   let r = resolveGame(g, state);
-  for (const m of r.matches) state.results[m.id] = { a: 1, b: 0 };
+  for (const m of r.matches) state.results[m.id] = m.a < m.b ? { a: 1, b: 0 } : { a: 0, b: 1 };
   r = resolveGame(g, state);
   assert.equal(r.ranking.length, 3);
+  assert.deepEqual(r.ranking.map((x) => x.id), ['x', 'y', 'z']);
   assert.equal(r.done, true);
   assert.equal(resolveGame(game({ id: 'nix' }), state).drawn, false);
+});
+
+test('Stechen: Gleichstand um einen Platz, der zählt, wird ausgespielt', () => {
+  // Gruppe mit 3, 1 weiter (also Podest zählt). Jeder schlägt jeden 1:0 im Kreis → alles gleich.
+  const g = game({ advance: 1 });
+  const state = { games: [g], draws: { g1: { groups: [['x', 'y', 'z']] } }, results: {} };
+  let r = resolveGame(g, state);
+  const win = { 'x:y': 'x', 'y:z': 'y', 'x:z': 'z' };
+  for (const m of r.matches) {
+    const w = win[[m.a, m.b].sort().join(':')];
+    state.results[m.id] = w === m.a ? { a: 1, b: 0 } : { a: 0, b: 1 };
+  }
+  r = resolveGame(g, state);
+  const st0 = r.matches.filter((m) => m.stechen);
+  assert.equal(st0.length, 3, 'Stechen jeder gegen jeden');
+  assert.equal(r.groupsDone, false);
+  assert.equal(r.done, false);
+  assert.ok(r.tables[0].rows.every((x) => x.tie === 'stechen-offen'));
+  assert.ok(st0.every((m) => m.id.startsWith('g1:G0:S0:') && m.phase === 'group'));
+  assert.match(checkResult(g, st0[0], 2, 2), /Stechen gibt es kein Unentschieden/);
+  assert.equal(checkResult(g, st0[0], 3, 2), null);
+  // Stechen wieder im Kreis → zweite Runde
+  for (const m of st0) {
+    const w = win[[m.a, m.b].sort().join(':')];
+    state.results[m.id] = w === m.a ? { a: 1, b: 0 } : { a: 0, b: 1 };
+  }
+  r = resolveGame(g, state);
+  const st1 = r.matches.filter((m) => m.stechen && m.stechenRound === 1);
+  assert.equal(st1.length, 3);
+  assert.equal(r.done, false);
+  // Zweite Runde: z gewinnt alles, y schlägt x
+  for (const m of st1) {
+    const w = [m.a, m.b].includes('z') ? 'z' : 'y';
+    state.results[m.id] = w === m.a ? { a: 2, b: 0 } : { a: 0, b: 2 };
+  }
+  r = resolveGame(g, state);
+  assert.deepEqual(r.tables[0].rows.map((x) => x.id), ['z', 'y', 'x']);
+  assert.ok(r.tables[0].rows.every((x) => x.tie === 'stechen'));
+  assert.equal(r.done, true);
+  assert.deepEqual(r.ranking.map((x) => x.id), ['z', 'y', 'x']);
+});
+
+test('Stechen: nur wenn der Platz zählt, sonst gleich platziert', () => {
+  // 4er-Gruppe, 2 weiter, 2 Gruppen: Platz 3 und 4 zählen nicht
+  const g = game();
+  const groups = [['a1', 'a2', 'a3', 'a4'], ['b1', 'b2', 'b3', 'b4']];
+  const state = { games: [g], draws: { g1: { groups } }, results: {} };
+  let r = resolveGame(g, state);
+  for (const m of r.matches.filter((x) => x.phase === 'group')) {
+    // a3–a4 unentschieden, sonst gewinnt die kleinere Nummer
+    state.results[m.id] = (m.a === 'a3' && m.b === 'a4') || (m.a === 'a4' && m.b === 'a3') ? { a: 0, b: 0 } : m.a < m.b ? { a: 1, b: 0 } : { a: 0, b: 1 };
+  }
+  // a1–a2 gleich machen: a2 schlägt a1 nicht, aber Unentschieden + gleiche Bilanz
+  const a12 = r.matches.find((m) => m.group === 0 && [m.a, m.b].sort().join() === 'a1,a2');
+  state.results[a12.id] = { a: 0, b: 0 };
+  r = resolveGame(g, state);
+  const rows = r.tables[0].rows;
+  assert.equal(rows.find((x) => x.id === 'a3').tie, 'gleich');
+  assert.equal(rows.find((x) => x.id === 'a1').tie, 'stechen-offen', 'Platz 1/2 zählt für die Setzung');
+  assert.equal(r.matches.filter((m) => m.stechen).length, 1);
+  assert.equal(r.groupsDone, false);
 });
 
 test('Beste Gruppendritte werden pro Match verglichen', () => {

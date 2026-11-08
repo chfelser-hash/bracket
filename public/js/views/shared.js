@@ -28,7 +28,7 @@ export function stationName(game, slot) {
 
 /** Bezeichnung des Matches: «Gruppe A», «Halbfinal 1», «Final» */
 export function matchTitle(m) {
-  if (m.phase === 'group') return `Gruppe ${groupName(m.group)}`;
+  if (m.phase === 'group') return `${m.stechen ? 'Stechen ' : ''}Gruppe ${groupName(m.group)}`;
   if (m.third || m.roundName === 'Final') return m.roundName;
   return `${m.roundName} ${m.num}`;
 }

@@ -21,7 +21,7 @@ export function renderTabellen(main, c) {
   };
   main.replaceChildren(
     h('div', { class: 'title-row' }, h('h1', { class: 'page-title' }, 'Tabellen'), h('a', { class: 'btn small ghost', href: '#druck' }, 'Erinnerung als PDF')),
-    drawn.length > 1 ? chips(drawn.map((g) => ({ value: g.id, label: g.name, color: c.color(g.id) })), gid, show, 'scroll') : null,
+    ...(drawn.length > 1 ? [chips(drawn.map((g) => ({ value: g.id, label: g.name, color: c.color(g.id) })), gid, show, 'scroll')] : []),
     body);
   show(gid);
 }
@@ -52,7 +52,9 @@ function qualifiedIds(r) {
 const TIE = {
   direkt: ['D', 'Punktgleich – die Direktbegegnung entscheidet'],
   tore: ['T', 'Punktgleich, Direktbegegnung ausgeglichen – Tordifferenz bzw. Tore entscheiden'],
-  los: ['L', 'Alles gleich – das Los (Reihenfolge der Auslosung) entscheidet'],
+  stechen: ['S', 'Alles gleich – das Stechen hat entschieden'],
+  'stechen-offen': ['Stechen!', 'Alles gleich – ein Stechen entscheidet (siehe Spiele der Gruppe)'],
+  gleich: ['=', 'Alles gleich – für das Weiterkommen egal, darum kein Stechen'],
 };
 
 function groupTable(c, t, qualified, opts) {
@@ -62,7 +64,7 @@ function groupTable(c, t, qualified, opts) {
     h('th', { title: 'Tore' }, 'Tore'), h('th', { title: 'Tordifferenz' }, '±'), h('th', { class: 'pts', title: 'Punkte' }, 'Pkt'));
   const rows = t.rows.map((row) => h('tr', { class: (qualified.has(row.id) ? 'q ' : '') + (row.id === state.me ? 'me' : '') },
     h('td', { class: 'rank' }, row.rank),
-    h('td', { class: 'name' }, c.name(row.id), row.tie && row.played ? h('span', { class: 'tie', title: TIE[row.tie][1] }, ` (${TIE[row.tie][0]})`) : null),
+    h('td', { class: 'name' }, c.name(row.id), row.tie && row.played && TIE[row.tie] ? h('span', { class: 'tie' + (row.tie === 'stechen-offen' ? ' open' : ''), title: TIE[row.tie][1] }, ` (${TIE[row.tie][0]})`) : null),
     h('td', null, row.played),
     compact ? null : h('td', null, row.w), compact ? null : h('td', null, row.d), compact ? null : h('td', null, row.l),
     h('td', null, `${row.gf}:${row.ga}`),
@@ -70,11 +72,16 @@ function groupTable(c, t, qualified, opts) {
     h('td', { class: 'pts' }, row.pts)));
   const table = h('table', { class: 'standings' }, h('thead', null, head), h('tbody', null, rows));
   if (opts.tv) return h('div', { class: 'group' }, table);
-  const ms = t.matches.map((m) => c.list.find((x) => x.id === m.id)).filter(Boolean).sort((a, b) => a.slot.start - b.slot.start);
+  const ms = [...t.matches, ...t.stechen].map((m) => c.list.find((x) => x.id === m.id)).filter(Boolean).sort((a, b) => a.slot.start - b.slot.start);
+  const openSt = t.stechen.filter((m) => !c.list.find((x) => x.id === m.id)?.result);
   return h('div', { class: 'group' }, table,
+    openSt.length && !opts.tv ? h('div', { class: 'stechen-box' },
+      h('strong', null, `Stechen in Gruppe ${t.name}`),
+      openSt.map((m) => h('button', { type: 'button', class: 'gm', onclick: () => openScore(c, m) },
+        h('span', { class: 'gm-time' }, 'jetzt'), side(c, m, 'a'), h('span', { class: 'gm-score' }, '–'), side(c, m, 'b')))) : null,
     h('details', { class: 'group-matches' }, h('summary', null, `Spiele der Gruppe ${t.name} (${ms.filter((m) => m.result).length}/${ms.length})`),
       h('ul', null, ms.map((m) => h('li', null, h('button', { type: 'button', class: 'gm' + (isMine(m) ? ' mine' : ''), onclick: () => openScore(c, m) },
-        h('span', { class: 'gm-time' }, m.result ? '✓' : fmtTime(m.slot.start)), side(c, m, 'a'), h('span', { class: 'gm-score' }, m.result ? `${m.result.a}:${m.result.b}` : '–'), side(c, m, 'b')))))));
+        h('span', { class: 'gm-time' }, m.stechen ? 'Stechen' : m.result ? '✓' : fmtTime(m.slot.start)), side(c, m, 'a'), h('span', { class: 'gm-score' }, m.result ? `${m.result.a}:${m.result.b}` : '–'), side(c, m, 'b')))))));
 }
 
 function rules(g, r) {
@@ -82,7 +89,7 @@ function rules(g, r) {
   return h('details', { class: 'rules' }, h('summary', null, 'So wird gewertet'),
     h('p', null, `Sieg ${POINTS.win} Punkte, Unentschieden ${POINTS.draw}, Niederlage ${POINTS.loss}. Bei Gleichstand zählt der Reihe nach:`),
     h('ol', null, TIEBREAK_RULES.map((x) => h('li', null, x))),
-    h('p', { class: 'small muted' }, 'Bei Punktgleichheit steht, was entschieden hat: (D) Direktbegegnung, (T) Tordifferenz oder Tore, (L) Los. ', adv,
+    h('p', { class: 'small muted' }, 'Bei Punktgleichheit steht, was entschieden hat: (D) Direktbegegnung, (T) Tordifferenz oder Tore, (S) Stechen. (=) heisst: alles gleich, aber für das Weiterkommen egal. ', adv,
       g.koSize ? ' Fehlen Plätze, kommen die besten Gruppen-Nächsten weiter (verglichen pro Match).' : ''));
 }
 

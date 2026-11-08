@@ -12,7 +12,7 @@ export const TIEBREAK_RULES = [
   'Direktbegegnung: Punkte, Tordifferenz, Tore nur aus den Spielen der Punktgleichen untereinander (bei mehr als zwei wird das für die übrigen Punktgleichen wiederholt)',
   'Tordifferenz aus allen Gruppenspielen',
   'Mehr erzielte Tore aus allen Gruppenspielen',
-  'Los (Reihenfolge der Auslosung)',
+  'Stechen: Ist danach noch alles gleich und geht es um einen Platz, der zählt (Weiterkommen, Setzung, Podest), spielen die Betroffenen ein Entscheidungsmatch ohne Unentschieden',
 ];
 
 export const DEFAULT_GAME = { roundMin: 10, stations: ['Station 1'], groupSize: 4, advance: 2, koSize: 0, bestOf: 1, thirdPlace: true };
@@ -112,7 +112,7 @@ function blocks(list, cmp) {
 /**
  * Punktgleiche ordnen (wie an der EM): zuerst die Direktbegegnung (Mini-Tabelle nur aus den Spielen
  * untereinander); trennt sie nur einen Teil, wird sie für die übrigen Punktgleichen wiederholt.
- * Danach Tordifferenz und Tore aus allen Spielen, zuletzt das Los.
+ * Danach Tordifferenz und Tore aus allen Spielen. Bleibt alles gleich: 'los' (→ Stechen, siehe resolveGame).
  */
 function breakTie(tied, matches, results) {
   const sub = tally(tied.map((t) => t.id), matches, results);
@@ -125,10 +125,13 @@ function breakTie(tied, matches, results) {
       return breakTie(part, matches, results);
     });
   }
-  // Direktbegegnung trennt nicht: Tordifferenz, Tore (alle Spiele), dann Los
+  // Direktbegegnung trennt nicht: Tordifferenz, Tore (alle Spiele); sonst vorläufig Reihenfolge der Auslosung
   const cmpAll = (x, y) => y.gd - x.gd || y.gf - x.gf;
   sorted.sort((x, y) => cmpAll(x, y) || x.order - y.order);
-  for (const part of blocks(sorted, cmpAll)) for (const t of part) t.tie = part.length > 1 ? 'los' : 'tore';
+  for (const part of blocks(sorted, cmpAll)) for (const t of part) {
+    t.tie = part.length > 1 ? 'los' : 'tore';
+    if (part.length > 1) t.losWith = part.map((x) => x.id);
+  }
   return sorted;
 }
 
@@ -284,13 +287,16 @@ export function resolveGame(game, state) {
   if (!draw) return { game, drawn: false, groups: [], tables: [], matches: [], ko: null, ranking: [] };
   const groups = draw.groups;
   const gm = groupMatches(game, groups);
+  const ko = koStructure(game, groups);
   const tables = groups.map((ids, gi) => {
     const ms = gm.filter((m) => m.group === gi);
     const rows = standings(ids, ms, results);
-    return { group: gi, name: groupName(gi), rows, complete: ms.every((m) => results[m.id]), matches: ms };
+    const played = ms.every((m) => results[m.id]);
+    const st = played ? applyStechen(game.id, gi, rows, results, relevantPlaces(ko, gi, groups.length)) : { matches: [], open: false };
+    return { group: gi, name: groupName(gi), rows, played, complete: played && !st.open, matches: ms, stechen: st.matches };
   });
   const groupsDone = tables.every((t) => t.complete);
-  const ko = koStructure(game, groups);
+  const stechenMatches = tables.flatMap((t) => t.stechen);
 
   // Setzplätze auflösen, sobald alle Gruppen fertig sind
   const seedPlayer = {};
@@ -348,9 +354,58 @@ export function resolveGame(game, state) {
 
   return {
     game, drawn: true, groups, tables, groupsDone, ko, ranking,
-    matches: [...gm, ...koMatches],
+    matches: [...gm, ...stechenMatches, ...koMatches],
     done: ranking.length > 0 && ranking[0].id != null,
   };
+}
+
+// ---------- Stechen ----------
+/** Bis zu welchem Gruppenplatz zählt die Reihenfolge? (Weiterkommen und Setzung; ohne KO: Podest bei einer Gruppe) */
+function relevantPlaces(ko, gi, nGroups) {
+  if (!ko.matches.length) return nGroups === 1 ? 3 : 0;
+  return Math.max(0, ...ko.slots.map((s) => (s.group === gi ? s.place : s.best || 0)));
+}
+
+/**
+ * Vollständiger Gleichstand nach allen Kriterien → Stechen unter den Betroffenen (jeder gegen jeden, kein
+ * Unentschieden). Bleibt es gleich (z.B. drei mit je einem Sieg), folgt eine weitere Stechen-Runde.
+ * Ordnet rows direkt um und liefert die Stechen-Matches sowie ob noch eines offen ist.
+ */
+export function applyStechen(gameId, gi, rows, results, upTo) {
+  const out = { matches: [], open: false };
+  for (let i = 0; i < rows.length;) {
+    const r = rows[i];
+    if (!r.losWith) { i++; continue; }
+    const n = r.losWith.length;
+    const block = rows.slice(i, i + n);
+    if (i + 1 > upTo) {
+      for (const x of block) x.tie = 'gleich';
+    } else {
+      let blockOpen = false;
+      const rank = (list, round) => {
+        const ms = [];
+        for (let a = 0; a < list.length; a++) for (let b = a + 1; b < list.length; b++) {
+          const A = list[a].id, B = list[b].id;
+          ms.push({ id: `${gameId}:G${gi}:S${round}:${A}:${B}`, gameId, phase: 'group', group: gi, round: 1000 + round, stechen: true, stechenRound: round, a: A, b: B });
+        }
+        out.matches.push(...ms);
+        if (!ms.every((m) => results[m.id])) { blockOpen = true; return list; }
+        const tab = tally(list.map((x) => x.id), ms, results);
+        const cmp = (x, y) => cmpMain(tab.get(x.id), tab.get(y.id));
+        const sorted = [...list].sort((x, y) => cmp(x, y) || x.order - y.order);
+        const parts = blocks(sorted, cmp);
+        if (round >= 9) return sorted;
+        return parts.flatMap((p) => (p.length > 1 ? rank(p, round + 1) : p));
+      };
+      const ordered = rank(block, 0);
+      for (const x of ordered) x.tie = blockOpen ? 'stechen-offen' : 'stechen';
+      rows.splice(i, n, ...ordered);
+      if (blockOpen) out.open = true;
+    }
+    i += n;
+  }
+  rows.forEach((x, k) => { x.rank = k + 1; });
+  return out;
 }
 
 // ---------- Resultat prüfen ----------
@@ -358,8 +413,9 @@ export function resolveGame(game, state) {
 export function checkResult(game, match, a, b) {
   if (!Number.isInteger(a) || !Number.isInteger(b) || a < 0 || b < 0) return 'Bitte ganze Zahlen ab 0 eingeben';
   if (a > 999 || b > 999) return 'Resultat zu gross';
-  if (match.phase !== 'ko') return null;
-  if (a === b) return 'Im KO gibt es kein Unentschieden';
+  if (match.phase !== 'ko' && !match.stechen) return null;
+  if (a === b) return match.stechen ? 'Im Stechen gibt es kein Unentschieden' : 'Im KO gibt es kein Unentschieden';
+  if (match.stechen) return null;
   const bo = Math.max(1, Number(game.bestOf) || 1);
   if (bo > 1) {
     const need = Math.ceil(bo / 2) + (bo % 2 ? 0 : 1);

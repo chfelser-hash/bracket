@@ -479,3 +479,8 @@ body[data-route="druck"] main { max-width: 900px; }
   .print-game { border-top: 0; break-before: page; }
   .pc-head h1 { font-size: 34pt; }
 }
+
+/* Stechen */
+.tie.open { color: var(--live); font-weight: 800; }
+.stechen-box { margin: .4rem .35rem .2rem; padding: .4rem .5rem; border: 2px solid var(--live); border-radius: 8px; }
+.stechen-box strong { display: block; font-size: .9rem; margin-bottom: .2rem; color: var(--live); }

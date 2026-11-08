@@ -39,9 +39,9 @@ Sieg 3 Punkte, Unentschieden 1, Niederlage 0. Bei Punktgleichheit der Reihe nach
 1. **Direktbegegnung** – Mini-Tabelle nur aus den Spielen der Punktgleichen untereinander (Punkte, Tordifferenz, Tore). Trennt sie bei drei oder mehr nur einen Teil, wird sie für die übrigen wiederholt.
 2. Tordifferenz aus allen Gruppenspielen
 3. Mehr erzielte Tore aus allen Gruppenspielen
-4. Los (Reihenfolge der Auslosung)
+4. **Stechen** – ist dann noch alles gleich und geht es um einen Platz, der zählt (Weiterkommen, Setzung in der Finalrunde, Podest ohne Finalrunde), spielen die Betroffenen ein Entscheidungsmatch ohne Unentschieden (bei drei oder mehr jeder gegen jeden; bleibt es gleich, gibt es eine weitere Runde). Das Stechen erscheint automatisch unter «Jetzt», im Zeitplan und bei der Gruppe; die Finalrunde wartet darauf. Geht es um nichts, steht **(=)** und es gibt kein Stechen.
 
-In der Tabelle steht dann, was entschieden hat: **(D)** Direktbegegnung, **(T)** Tordifferenz/Tore, **(L)** Los. Die Regel steht in der App unter «Tabellen → So wird gewertet».
+In der Tabelle steht dann, was entschieden hat: **(D)** Direktbegegnung, **(T)** Tordifferenz/Tore, **(S)** Stechen. Die Regel steht in der App unter «Tabellen → So wird gewertet».
 
 ### Finalrunde
 

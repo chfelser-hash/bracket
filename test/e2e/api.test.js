@@ -243,9 +243,14 @@ test('KO-Löschung mit Folgespielen und Best of 3', async () => {
   let d = await data();
   const g2 = d.games.find((g) => g.id === games.g2.id);
   let r = resolveGame(g2, d);
-  for (const m of r.matches.filter((x) => x.phase === 'group')) await api('POST', `/api/results/${m.id}`, { a: 1, b: 0 });
+  // Eindeutige Tabelle (kein Stechen): wer zuerst erfasst wurde, gewinnt
+  const order = d.players.map((p) => p.id);
+  for (const m of r.matches.filter((x) => x.phase === 'group')) {
+    await api('POST', `/api/results/${m.id}`, order.indexOf(m.a) < order.indexOf(m.b) ? { a: 1, b: 0 } : { a: 0, b: 1 });
+  }
   d = await data();
   r = resolveGame(g2, d);
+  assert.equal(r.matches.filter((m) => m.stechen).length, 0);
   const [s1, s2] = r.matches.filter((m) => m.roundName === 'Halbfinal');
   assert.equal((await api('POST', `/api/results/${s1.id}`, { a: 3, b: 0 })).status, 400, 'Best of 3: zuerst 2');
   await api('POST', `/api/results/${s1.id}`, { a: 2, b: 1 });
@@ -285,6 +290,53 @@ test('Einstellungen nach Resultaten: KO-Modus ändern löscht nur KO, Gruppengr�
   assert.equal((await api('POST', '/api/draw', { gameId: g2.id })).status, 200);
   assert.equal((await api('DELETE', `/api/draw/${g2.id}`)).status, 200);
   assert.equal((await api('POST', `/api/draw/${g2.id}/swap`, { a: 'x', b: 'y' })).status, 400);
+});
+
+test('Stechen über die API: eintragen, kein Unentschieden, wird bei Gruppenänderung gelöscht', async () => {
+  const { data: gx } = await api('POST', '/api/games', { name: 'Stechtest', groupSize: 3, advance: 1, stations: ['S'] });
+  const g = gx.game;
+  await api('POST', '/api/participation', { gameId: g.id, on: false });
+  let d = await data();
+  for (const p of d.players.slice(0, 3)) await api('POST', '/api/participation', { gameId: g.id, playerId: p.id, on: true });
+  await api('POST', '/api/draw', { gameId: g.id });
+  d = await data();
+  let r = resolveGame(d.games.find((x) => x.id === g.id), d);
+  // Alle Gruppenspiele 1:1 → dreifacher Gleichstand
+  for (const m of r.matches) await api('POST', `/api/results/${m.id}`, { a: 1, b: 1 });
+  d = await data();
+  r = resolveGame(d.games.find((x) => x.id === g.id), d);
+  const st = r.matches.filter((m) => m.stechen);
+  assert.equal(st.length, 3);
+  assert.equal((await api('POST', `/api/results/${st[0].id}`, { a: 1, b: 1 })).status, 400);
+  const anon = apiClient(srv.base);
+  assert.equal((await anon('POST', `/api/results/${st[0].id}`, { a: 2, b: 1 })).status, 200, 'Stechen ohne PIN eintragbar');
+  // Gruppenresultat ändern → Stechen hinfällig, nur mit Bestätigung
+  const gm = r.matches.find((m) => !m.stechen);
+  const res = await api('POST', `/api/results/${gm.id}`, { a: 2, b: 1 });
+  assert.equal(res.status, 409);
+  assert.match(res.data.error, /Stechen/);
+  assert.equal((await api('POST', `/api/results/${gm.id}`, { a: 2, b: 1, force: true })).status, 200);
+  d = await data();
+  assert.ok(!Object.keys(d.results).some((k) => k.includes(':S0:')));
+  // Löschen eines Stechens mit späteren Runden
+  await api('POST', `/api/results/${gm.id}`, { a: 1, b: 1 });
+  d = await data();
+  r = resolveGame(d.games.find((x) => x.id === g.id), d);
+  const s0 = r.matches.filter((m) => m.stechen);
+  for (const m of s0) await api('POST', `/api/results/${m.id}`, { a: 1, b: 0 }); // a gewinnt je nach Paarung – evtl. Kreis
+  d = await data();
+  r = resolveGame(d.games.find((x) => x.id === g.id), d);
+  const s1 = r.matches.filter((m) => m.stechen && m.stechenRound === 1);
+  if (s1.length) {
+    await api('POST', `/api/results/${s1[0].id}`, { a: 1, b: 0 });
+    assert.equal((await api('DELETE', `/api/results/${s0[0].id}`)).status, 409);
+    assert.equal((await api('DELETE', `/api/results/${s0[0].id}?force=1`)).status, 200);
+    d = await data();
+    assert.equal(d.results[s1[0].id], undefined);
+  } else {
+    assert.equal((await api('DELETE', `/api/results/${s0[0].id}`)).status, 200);
+  }
+  await api('DELETE', `/api/games/${g.id}`);
 });
 
 test('Sicherung, Wiederherstellung, neues Turnier, PIN ändern', async () => {

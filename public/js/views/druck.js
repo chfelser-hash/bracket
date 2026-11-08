@@ -121,8 +121,8 @@ function gamePage(c, g) {
       h('h3', null, 'Alle Gruppenspiele'),
       h('div', { class: 'pg-cols' }, r.tables.filter((tb) => tb.matches.length).map((tb) => h('div', { class: 'pg-group' },
         r.tables.length > 1 ? h('h4', null, `Gruppe ${groupName(tb.group)}`) : null,
-        h('ul', null, groupMs.filter((m) => m.group === tb.group).sort((a, b) => a.slot.start - b.slot.start).map((m) => h('li', null,
-          h('span', null, c.name(m.a)),
+        h('ul', null, groupMs.filter((m) => m.group === tb.group).sort((a, b) => a.slot.start - b.slot.start).map((m) => h('li', { class: m.stechen ? 'st' : null },
+          h('span', null, m.stechen ? h('b', null, 'Stechen ') : null, c.name(m.a)),
           h('span', { class: 'res' }, m.result ? `${m.result.a} : ${m.result.b}` : '–'),
           h('span', null, c.name(m.b))))))))) : null);
 }
