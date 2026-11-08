@@ -1,6 +1,6 @@
 {
   "name": "bracket",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Bracket – unser alljährliches Game-Turnier als Web-App (PWA) – auf einer Synology NAS oder lokal betreibbar",
   "private": true,
   "type": "module",

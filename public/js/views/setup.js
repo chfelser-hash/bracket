@@ -279,7 +279,8 @@ function pinBlock() {
     h('div', { class: 'row gap wrap' },
       h('button', { class: 'btn', onclick: changePin }, 'PIN ändern'),
       h('button', { class: 'btn ghost', onclick: lockDevice }, 'Dieses Gerät sperren'),
-      h('a', { class: 'btn ghost', href: '#tv' }, 'TV-Ansicht öffnen')));
+      h('a', { class: 'btn ghost', href: '#tv' }, 'TV-Ansicht öffnen'),
+      h('a', { class: 'btn ghost', href: '#druck' }, 'Erinnerung als PDF')));
 }
 
 async function changePin() {

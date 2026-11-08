@@ -5,7 +5,7 @@ const ASSETS = [
   '/', '/index.html', '/styles.css', '/manifest.webmanifest',
   '/icons/icon.svg', '/icons/icon-192.png', '/icons/icon-512.png', '/icons/icon-maskable-512.png',
   '/js/app.js', '/js/ui.js', '/js/turnier.js',
-  '/js/views/jetzt.js', '/js/views/plan.js', '/js/views/tabellen.js', '/js/views/setup.js', '/js/views/tv.js', '/js/views/score.js', '/js/views/shared.js',
+  '/js/views/jetzt.js', '/js/views/plan.js', '/js/views/tabellen.js', '/js/views/setup.js', '/js/views/tv.js', '/js/views/score.js', '/js/views/shared.js', '/js/views/druck.js',
 ];
 
 self.addEventListener('install', (e) => {

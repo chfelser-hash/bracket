@@ -6,6 +6,7 @@ import { renderPlan } from './views/plan.js';
 import { renderTabellen } from './views/tabellen.js';
 import { renderSetup } from './views/setup.js';
 import { renderTv } from './views/tv.js';
+import { renderDruck } from './views/druck.js';
 
 const ROUTES = {
   jetzt: { label: 'Jetzt', icon: '●', render: renderJetzt },
@@ -192,10 +193,14 @@ export function render() {
   const r = route();
   document.body.dataset.route = r;
   document.title = r === 'tv' ? `${state.data.tournament.name} – TV` : 'Bracket';
-  if (r === 'tv') {
+  if (r === 'tv' || r === 'druck') {
     document.getElementById('topbar').replaceChildren();
     document.getElementById('tabbar').replaceChildren();
-    renderTv(main(), ctx());
+    // Erinnerung: nicht neu zeichnen, während man das PDF anschaut (Polling)
+    if (r === 'druck' && main().dataset.view === 'druck' && main().dataset.rev === String(state.data.rev)) return;
+    main().dataset.view = r;
+    main().dataset.rev = String(state.data.rev);
+    (r === 'tv' ? renderTv : renderDruck)(main(), ctx());
     return;
   }
   renderTopbar(r);

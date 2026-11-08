@@ -106,6 +106,19 @@ test('Ohne PIN: neue Resultate ja, ändern fragt nach der PIN', { timeout: 60000
   await p2.close();
 });
 
+test('Erinnerung als PDF', { timeout: 60000 }, async () => {
+  await page.goto(srv.base + '/#tabellen');
+  await page.click('a:has-text("Erinnerung als PDF")');
+  await page.waitForSelector('.print-doc .pc-head h1');
+  assert.match(await page.title(), /Testturnier \d{4} – Erinnerung/);
+  assert.match(await page.textContent('.pc-note'), /Zwischenstand/);
+  assert.ok(await page.$('.print-game .standings'));
+  assert.ok(await page.$('.pc-overview table.ov'));
+  const pdf = await page.pdf({ format: 'A4', printBackground: true });
+  assert.ok(pdf.length > 10000, 'PDF wird erzeugt');
+  assert.equal(String.fromCharCode(...pdf.subarray(0, 4)), '%PDF');
+});
+
 test('TV-Ansicht', { timeout: 30000 }, async () => {
   const tv = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
   tv.on('pageerror', (e) => errors.push(String(e)));

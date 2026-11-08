@@ -8,6 +8,7 @@ Läuft im Browser auf Handy, PC und TV, die Daten liegen auf der eigenen Synolog
 - **Zeitplan** – alle Matches aller Spiele in zeitlicher Reihenfolge, mit Station, Pause und geschätztem Ende. Filter nach Spiel.
 - **Tabellen** – pro Spiel die Gruppen (Weiterkommende grün), die Gruppenspiele, die Wertungsregel und der Turnierbaum mit Spiel um Platz 3; am Schluss das Podest.
 - **Setup** – Turnier (Name, Datum, Startzeit, Wechselzeit, Pause), Teilnehmer, Spiele mit Modus, «Wer spielt was» als Kreuzchen-Tabelle, Auslosung, PIN, Sicherung, Update.
+- **Erinnerung als PDF** (unter Tabellen und Setup) – das ganze Turnier als schönes A4-Dokument: Titelseite mit den Siegern jedes Spiels, Zahlen und einer Übersicht «Wer ist wie weit gekommen», danach pro Spiel eine Seite mit Podest, Gruppentabellen, Turnierbaum und allen Resultaten. «Als PDF speichern» öffnet das Druckfenster des Browsers – dort «Als PDF speichern» wählen (Handy: Teilen → Drucken → PDF). Geht auch mitten im Turnier, dann steht «Zwischenstand» darauf.
 - **TV-Ansicht** (`/#tv`, Knopf unter Setup) – links «Jetzt und als Nächstes» in grosser Schrift, rechts abwechselnd Tabellen und Turnierbaum jedes Spiels, grosse Uhr. Aktualisiert sich alle paar Sekunden.
 
 Keine externen Abhängigkeiten: nur Node.js. Daten als JSON-Datei mit täglicher automatischer Sicherung (30 Tage).

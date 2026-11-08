@@ -20,7 +20,7 @@ export function renderTabellen(main, c) {
     body.replaceChildren(...gameTables(c, id, {}));
   };
   main.replaceChildren(
-    h('h1', { class: 'page-title' }, 'Tabellen'),
+    h('div', { class: 'title-row' }, h('h1', { class: 'page-title' }, 'Tabellen'), h('a', { class: 'btn small ghost', href: '#druck' }, 'Erinnerung als PDF')),
     drawn.length > 1 ? chips(drawn.map((g) => ({ value: g.id, label: g.name, color: c.color(g.id) })), gid, show, 'scroll') : null,
     body);
   show(gid);
@@ -56,14 +56,15 @@ const TIE = {
 };
 
 function groupTable(c, t, qualified, opts) {
+  const compact = opts.tv && !opts.print;
   const head = h('tr', null, h('th', { class: 'rank' }, ''), h('th', { class: 'name' }, `Gruppe ${t.name}`), h('th', { title: 'Spiele' }, 'Sp'),
-    opts.tv ? null : h('th', { title: 'Siege' }, 'S'), opts.tv ? null : h('th', { title: 'Unentschieden' }, 'U'), opts.tv ? null : h('th', { title: 'Niederlagen' }, 'N'),
+    compact ? null : h('th', { title: 'Siege' }, 'S'), compact ? null : h('th', { title: 'Unentschieden' }, 'U'), compact ? null : h('th', { title: 'Niederlagen' }, 'N'),
     h('th', { title: 'Tore' }, 'Tore'), h('th', { title: 'Tordifferenz' }, '±'), h('th', { class: 'pts', title: 'Punkte' }, 'Pkt'));
   const rows = t.rows.map((row) => h('tr', { class: (qualified.has(row.id) ? 'q ' : '') + (row.id === state.me ? 'me' : '') },
     h('td', { class: 'rank' }, row.rank),
     h('td', { class: 'name' }, c.name(row.id), row.tie && row.played ? h('span', { class: 'tie', title: TIE[row.tie][1] }, ` (${TIE[row.tie][0]})`) : null),
     h('td', null, row.played),
-    opts.tv ? null : h('td', null, row.w), opts.tv ? null : h('td', null, row.d), opts.tv ? null : h('td', null, row.l),
+    compact ? null : h('td', null, row.w), compact ? null : h('td', null, row.d), compact ? null : h('td', null, row.l),
     h('td', null, `${row.gf}:${row.ga}`),
     h('td', null, row.gd > 0 ? '+' + row.gd : row.gd),
     h('td', { class: 'pts' }, row.pts)));

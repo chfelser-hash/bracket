@@ -3,6 +3,9 @@
 Neueste Version zuoberst. Format: `## Version – Datum`, darunter je eine Zeile pro Änderung.
 Die Version steht auch in `package.json` und unter «Setup → Über Bracket».
 
+## 1.4.0 – 2026-11-08
+- Neu: «Erinnerung als PDF» (unter Tabellen und Setup) – Titelseite mit allen Siegern, Zahlen und der Übersicht «Wer ist wie weit gekommen», danach pro Spiel eine Seite mit Podest, Tabellen, Turnierbaum und allen Resultaten. Speichern über das Druckfenster des Browsers.
+
 ## 1.3.0 – 2026-11-07
 - Gruppenwertung: Bei Punktgleichheit zählt jetzt zuerst die Direktbegegnung, erst danach Tordifferenz und Tore aus allen Spielen (wie an der EM). Bei drei oder mehr Punktgleichen wird die Direktbegegnung für die übrigen wiederholt.
 - In der Tabelle steht neu (D) Direktbegegnung, (T) Tordifferenz/Tore oder (L) Los.
